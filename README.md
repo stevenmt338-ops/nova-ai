@@ -1,11 +1,68 @@
-<div align="center">
+# NOVA AI — ذكاء واحد. إمكانيات بلا حدود.
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+منصة ذكاء اصطناعي متكاملة متعددة الوسائط (Multimodal AI Platform) مبنية وفق أعلى المعايير الهندسية والأمنية، لتقديم تجربة عربية سلسة مع دعم RTL كامل وتصميم Premium SaaS باللونين الأبيض والبنفسجي.
 
-  <h1>Built with AI Studio</h2>
+---
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## 🌟 المعمارية التقنية (Architecture)
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+- **Frontend**: React 19 + TypeScript + Tailwind CSS (RTL-First) + Lucide Icons + Motion.
+- **Backend**: Node.js + Express (Full-Stack) مع تكامل مباشر مع خادم التطوير عبر Vite Middleware.
+- **AI Core**: حزمة `@google/genai` الرسمية الحديثة مع عزل تام لمفاتيح الـ API في الخادم دون كشفها للمتصفح.
+- **Streaming**: دعم تدفق الإجابات الحي (Server-Sent Events - SSE).
+- **Persistence**: طبقة تخزين محلية مرنة وقابلة للربط بقواعد البيانات مثل Firestore وCloud SQL.
 
-</div>
+---
+
+## 🚀 الاستوديوهات والوحدات المدمجة
+
+| الوحدة | الوصف | النموذج المستخدم | الحالة |
+| :--- | :--- | :--- | :--- |
+| **NOVA BRAIN** | محادثة ذكية متعددة الوسائط، بث حي، تفكير استدلالي عميق، ومرفقات صور وملفات وصوت. | `gemini-3.8-flash` / `gemini-3.1-flash-lite` / `gemini-4-argon` | ✅ تعمل 100% |
+| **NOVA SEARCH** | بحث ويب حي وموثوق مع توثيق المصادر والروابط وفصل الحقائق عن الآراء، ووضع Deep Research. | `gemini-3.8-flash` مع `googleSearch` Grounding | ✅ تعمل 100% |
+| **NOVA IMAGINE** | استوديو توليد وتعديل الصور (Text-to-Image / Image-to-Image) مع نسب أبعاد متعددة وأساليب فنية. | `gemini-3.1-flash-lite-image` | ✅ تعمل 100% |
+| **NOVA VOICE (STT)** | تفريغ الصوت المسجل عبر الميكروفون مع استخراج ملخص تنفيذي. | `gemini-3.5-transcribe` | ✅ تعمل 100% |
+| **NOVA VOICE (TTS)** | تحويل النص إلى كلام ونطق بشري طبيعي مع 5 شخصيات صوتية متنوعة (WAV 24kHz). | `gemini-3.8-flash-lite-tts` | ✅ تعمل 100% |
+| **NOVA STUDIO** | بناء تطبيقات ومواقع الويب مع محرر أكواد ومعاينة حية في Sandbox معزول وإصلاح أخطاء آلي. | `gemini-3.8-flash` + Live Sandbox Iframe | ✅ تعمل 100% |
+| **NOVA TEAM** | فريق وكلاء ذكي متعاون (مخطط، باحث، محلل، منشئ، مراجع، منسق) لإنجاز المهام المعقدة. | Multi-Agent Collaborative Pipeline | ✅ تعمل 100% |
+| **NOVA CANVAS** | مساحة عمل تفاعلية لا نهائية مع بطاقات قابلة للسحب، روابط علاقات، وتنظيم ذكي. | Interactive Drag & Drop Board | ✅ تعمل 100% |
+| **NOVA MOTION** | مخرج سيناريو الفيديو وتحديد مسارات الكاميرا والمشاهد. | Storyboard Director + Veo Ready | ✅ المخرج مفعل (الرندر يتطلب مفتاح فوترة) |
+| **المكتبة والملفات** | أرشيف آمن لتنظيم الصور، الأصوات، الأكواد، والمستندات مع إمكانية التنزيل. | Local Vault Management | ✅ تعمل 100% |
+| **الذاكرة الشخصية** | تخصيص التفضيلات الشخصية وسياق العمل مع ضوابط خصوصية صارمة وزر إلغاء وتفعيل. | Opt-in Personal Memory Vault | ✅ تعمل 100% |
+| **لوحة الإدارة** | مراقبة صحة الخادم، حصص الطلبات (Rate Limiting)، وسجل تدقيق العمليات (Audit Logs). | Secure Admin Dashboard | ✅ تعمل 100% |
+
+---
+
+## 🔐 الأمان والخصوصية (Security & Privacy)
+
+1. **عزل المفاتيح**: يتم تمرير وقراءة مفتاح `GEMINI_API_KEY` في الخادم السحابي (`server.ts`) حصراً، ولا يتم تضمينه إطلاقاً في حزم الـ JavaScript للواجهة أو استجابات الشبكة.
+2. **صندوق المعاينة المعزول (Sandbox)**: يتم تشغيل الأكواد البرمجية المولدة داخل `iframe` مزود بقيود أمان (`sandbox="allow-scripts allow-forms allow-modals"`) لحماية جهاز وخادم المستخدم.
+3. **عدم تدريب النماذج على البيانات الحساسة**: الذاكرة الشخصية اختيارية بالكامل، ولا تُحفظ كلمات المرور أو أسرار الاعتماد.
+
+---
+
+## 🛠️ التشغيل والتطوير المحلي
+
+```bash
+# تثبيت الاعتماديات
+npm install
+
+# تشغيل خادم التطوير مع Vite Middleware
+npm run dev
+
+# فحص الأخطاء البرمجية والتحقق من الأنواع
+npm run lint
+
+# بناء نسخة الإنتاج
+npm run build
+
+# تشغيل في الإنتاج
+npm start
+```
+
+---
+
+## 🌐 النشر والمشاركة
+
+- التطبيق مهيأ ليعمل مباشرة في بيئة **Google Cloud Run** أو أي حاوية Docker قياسية.
+- يتم حقن المفاتيح تلقائياً عبر قسم **Settings > Secrets** في AI Studio.

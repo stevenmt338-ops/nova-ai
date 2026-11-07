@@ -1,0 +1,10 @@
+{
+  "name": "NOVA AI",
+  "description": "منصة ذكاء اصطناعي متكاملة متعددة الوسائط: محادثة متقدمة، بحث وتفكير عميق، استوديو صور وفيديو، صوت وتفريغ، محرر أكواد ومعاينة، مساحة عمل لانهائية وفريق وكلاء ذكي.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
