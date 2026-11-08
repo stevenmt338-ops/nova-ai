@@ -20,6 +20,7 @@ import {
 import { storage } from './utils/storage';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 import { HomeView } from './features/HomeView';
 import { ChatView } from './features/ChatView';
@@ -45,7 +46,7 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Model & Server Health State
-  const [selectedModel, setSelectedModel] = useState<ChatModel>('gemini-3.8-flash');
+  const [selectedModel, setSelectedModel] = useState<ChatModel>('gemini-3.1-flash-lite');
   const [serverOnline, setServerOnline] = useState(true);
 
   // Persistence State
@@ -185,28 +186,13 @@ export default function App() {
     );
   };
 
+  const [quickPromptToRun, setQuickPromptToRun] = useState<string | null>(null);
+
   // Quick Prompt from Home
   const handleQuickPrompt = (promptText: string, targetView: ViewMode = 'chat') => {
     handleNewConversation();
+    setQuickPromptToRun(promptText);
     setCurrentView(targetView);
-    // Allow message dispatch in ChatView
-    setTimeout(() => {
-      const active = conversations.find((c) => c.id === currentConvId) || conversations[0];
-      if (active) {
-        handleUpdateConversation({
-          ...active,
-          title: promptText.slice(0, 30),
-          messages: [
-            {
-              id: `msg_user_${Date.now()}`,
-              role: 'user',
-              content: promptText,
-              timestamp: new Date().toISOString(),
-            },
-          ],
-        });
-      }
-    }, 100);
   };
 
   // Add Card to Canvas from other features
@@ -254,8 +240,9 @@ export default function App() {
           serverOnline={serverOnline}
         />
 
-        {/* View Routing */}
+        {/* View Routing with ErrorBoundary */}
         <main className="flex-1 flex flex-col h-[calc(100vh-4rem)] overflow-hidden relative">
+          <ErrorBoundary>
           {currentView === 'home' && (
             <HomeView
               onSelectView={(v) => setCurrentView(v)}
@@ -273,6 +260,8 @@ export default function App() {
               selectedModel={selectedModel}
               onSelectModel={(m) => setSelectedModel(m)}
               onAddCanvasCard={handleAddCanvasCard}
+              initialPrompt={quickPromptToRun}
+              onClearInitialPrompt={() => setQuickPromptToRun(null)}
             />
           )}
 
@@ -367,6 +356,7 @@ export default function App() {
           )}
 
           {currentView === 'terms' && <TermsView />}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

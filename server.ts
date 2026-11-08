@@ -70,24 +70,31 @@ app.get('/api/health', (req: Request, res: Response) => {
 // -------------------------------------------------------------
 app.post('/api/chat', async (req: Request, res: Response) => {
   const reqId = generateRequestId();
-  let targetModel = 'gemini-3.8-flash';
+  let targetModel = 'gemini-3.1-flash-lite';
   let contents: any[] = [];
   let config: any = {};
+  let clientDisconnected = false;
+
+  res.on('close', () => {
+    if (!res.writableEnded) {
+      clientDisconnected = true;
+    }
+  });
 
   try {
     const {
       prompt,
       messages = [],
-      model = 'gemini-3.8-flash',
+      model = 'gemini-3.1-flash-lite',
       thinkingLevel,
       enableSearch = false,
       attachments = [], // [{ mimeType, data }]
       systemInstruction,
-      stream = false,
+      stream = true,
     } = req.body;
 
     if (!prompt && (!attachments || attachments.length === 0)) {
-      return res.status(400).json({ error: 'Prompt or attachment is required', requestId: reqId });
+      return res.status(400).json({ error: 'الرسالة أو المرفق مطلوب لبدء المحادثة', requestId: reqId });
     }
 
     if (!process.env.GEMINI_API_KEY) {
@@ -98,10 +105,10 @@ app.post('/api/chat', async (req: Request, res: Response) => {
       });
     }
 
-    // Determine target model
+    // Determine target model (Fast Flash Lite by default for high throughput)
     targetModel = model;
     if (!['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-4-argon'].includes(targetModel)) {
-      targetModel = 'gemini-3.8-flash';
+      targetModel = 'gemini-3.1-flash-lite';
     }
 
     // Construct tools
@@ -110,7 +117,7 @@ app.post('/api/chat', async (req: Request, res: Response) => {
       tools.push({ googleSearch: {} });
     }
 
-    // Configure thinking
+    // Configure thinking only for models that support it
     let thinkingConfig: any = undefined;
     if (thinkingLevel && (targetModel === 'gemini-3.8-flash' || targetModel === 'gemini-4-argon')) {
       if (thinkingLevel === 'HIGH') thinkingConfig = { thinkingLevel: ThinkingLevel.HIGH };
@@ -118,12 +125,11 @@ app.post('/api/chat', async (req: Request, res: Response) => {
       else thinkingConfig = { thinkingLevel: ThinkingLevel.MEDIUM };
     }
 
-    // Prepare contents: multi-turn history + current message parts
+    // Prepare contents: Window history to last 8 messages to reduce token lag
     const currentParts: any[] = [];
     if (attachments && Array.isArray(attachments)) {
       for (const att of attachments) {
         if (att.data && att.mimeType) {
-          // Strip prefix if user passed full data URI
           const cleanBase64 = att.data.replace(/^data:[^;]+;base64,/, '');
           currentParts.push({
             inlineData: {
@@ -139,12 +145,16 @@ app.post('/api/chat', async (req: Request, res: Response) => {
     }
 
     contents = [];
-    // Append previous dialogue turns if available
-    if (Array.isArray(messages) && messages.length > 0) {
-      for (const m of messages) {
+    // Only send the last 8 messages and cap history turn lengths to prevent high latency
+    const recentMessages = Array.isArray(messages) ? messages.slice(-8) : [];
+    for (const m of recentMessages) {
+      if (m && m.content) {
+        const textVal = typeof m.content === 'string' ? m.content : '';
+        // Trim oversized history items to prevent sluggish multi-thousand-token roundtrips
+        const cappedText = textVal.length > 1500 ? textVal.slice(0, 1500) + '...' : textVal;
         contents.push({
           role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content }],
+          parts: [{ text: cappedText }],
         });
       }
     }
@@ -154,12 +164,11 @@ app.post('/api/chat', async (req: Request, res: Response) => {
     if (systemInstruction) {
       config.systemInstruction = systemInstruction;
     } else {
-      config.systemInstruction = `أنت NOVA AI — مساعد ذكاء اصطناعي متقدم، سريع، دقيق وأصيل.
+      config.systemInstruction = `أنت NOVA AI — مساعد ذكاء اصطناعي فائق السرعة، ذكي، دقيق وودود.
 شعارك: "ذكاء واحد. إمكانيات بلا حدود."
-- أجب باللغة العربية الفصحى الواضحة والراقية (أو باللغة التي يسأل بها المستخدم).
-- قدم تنسيقات Markdown غنية مع عناوين واضحة ونقاط وقوائم وأكواد منسقة.
-- افصل بين الحقائق المؤكدة والاستنتاجات والحلول المقترحة.
-- لا تختلق معلومات أو مصادر غير موجودة.`;
+- أجب فورياً بدقة وإيجاز باللغة العربية الفصحى الجميلة والواضحة (أو بلغة السائل).
+- استخدم تنسيق Markdown أنيق، عناوين واضحة، وأكواد منسقة عند الطلب.
+- لا تختلق معلومات أو روابط غير مؤكدة.`;
     }
 
     if (tools.length > 0) {
@@ -170,10 +179,12 @@ app.post('/api/chat', async (req: Request, res: Response) => {
     }
 
     if (stream) {
-      // Server-Sent Events (SSE) streaming
+      // Set SSE headers and flush them immediately for zero-delay TTFT
       res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache, no-transform');
       res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.flushHeaders?.();
 
       const responseStream = await ai.models.generateContentStream({
         model: targetModel,
@@ -185,6 +196,10 @@ app.post('/api/chat', async (req: Request, res: Response) => {
       let groundingSources: any[] = [];
 
       for await (const chunk of responseStream) {
+        if (clientDisconnected) {
+          break;
+        }
+
         const chunkText = chunk.text || '';
         fullText += chunkText;
 
@@ -203,7 +218,9 @@ app.post('/api/chat', async (req: Request, res: Response) => {
         res.write(`data: ${payload}\n\n`);
       }
 
-      res.write(`data: [DONE]\n\n`);
+      if (!clientDisconnected) {
+        res.write(`data: [DONE]\n\n`);
+      }
       return res.end();
     } else {
       // Unary generation

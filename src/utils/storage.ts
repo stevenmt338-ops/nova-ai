@@ -39,11 +39,25 @@ function safeGet<T>(key: string, defaultValue: T): T {
   }
 }
 
-function safeSet<T>(key: string, value: T): void {
+const debounceTimers: Record<string, any> = {};
+
+function safeSet<T>(key: string, value: T, immediate = false): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    if (immediate) {
+      if (debounceTimers[key]) clearTimeout(debounceTimers[key]);
+      localStorage.setItem(key, JSON.stringify(value));
+      return;
+    }
+    if (debounceTimers[key]) clearTimeout(debounceTimers[key]);
+    debounceTimers[key] = setTimeout(() => {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (e) {
+        console.error(`Error saving storage key ${key}:`, e);
+      }
+    }, 300);
   } catch (e) {
-    console.error(`Error saving storage key ${key}:`, e);
+    console.error(`Error scheduling storage save for ${key}:`, e);
   }
 }
 

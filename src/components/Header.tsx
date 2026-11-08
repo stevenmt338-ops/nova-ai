@@ -84,26 +84,26 @@ export const Header: React.FC<HeaderProps> = ({
         {(currentView === 'chat' || currentView === 'home') && (
           <div className="hidden sm:flex items-center bg-[#FAF9FF] border border-[#E9E6F0] rounded-xl p-1 text-xs">
             <button
-              onClick={() => onSelectModel('gemini-3.8-flash')}
-              className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
-                selectedModel === 'gemini-3.8-flash'
-                  ? 'bg-white text-[#5635B5] shadow-xs font-bold border border-[#E9E6F0]'
-                  : 'text-[#777181] hover:text-[#201B2B]'
-              }`}
-              title="متوازن ومناسب لمعظم المهام (افتراضي)"
-            >
-              متوازن (3.8)
-            </button>
-            <button
               onClick={() => onSelectModel('gemini-3.1-flash-lite')}
               className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
                 selectedModel === 'gemini-3.1-flash-lite'
                   ? 'bg-white text-[#5635B5] shadow-xs font-bold border border-[#E9E6F0]'
                   : 'text-[#777181] hover:text-[#201B2B]'
               }`}
-              title="فائق السرعة وأقل استهلاكاً للحصة"
+              title="فائق السرعة وأقل استهلاكاً للحصة (الافتراضي للمحادثة السريعة)"
             >
-              سريع (Lite)
+              ⚡ سريع (Lite)
+            </button>
+            <button
+              onClick={() => onSelectModel('gemini-3.8-flash')}
+              className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                selectedModel === 'gemini-3.8-flash'
+                  ? 'bg-white text-[#5635B5] shadow-xs font-bold border border-[#E9E6F0]'
+                  : 'text-[#777181] hover:text-[#201B2B]'
+              }`}
+              title="متوازن ومناسب للمهام العامة"
+            >
+              متوازن (3.8)
             </button>
             <button
               onClick={() => onSelectModel('gemini-4-argon')}
